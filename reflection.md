@@ -14,9 +14,13 @@ Document at least 3 bugs you found. Add rows as needed.
 
 | Input | Expected Behavior | Actual Behavior | Console Output / Error |
 |-------|-------------------|-----------------|------------------------|
-| | | | |
-| | | | |
-| | | | |
+| before first guess| Attempts: 0 | Attempts: 1 | N/A |
+| before first guess| Hard Difficualty range is 1-50 | Hard Difficulty range should be greater than Normal  | N/A|
+| guess 24 when secret is 23| output go Lower| output go higher | go HIGHER! |
+| normal guesses|History record each guess| missing most current guess| normal|
+| start new game| Score reset to 0| Score preserved to last score| still shows game over.|
+| second to last guess| one more guess| out of attempts and reveal secret| Out of attempts!|
+|guess on the same higher or lower side as last guess| record attemp in history and subtract Attempts left| missing guess and attempt didn't get subtract| normal|
 
 ---
 
