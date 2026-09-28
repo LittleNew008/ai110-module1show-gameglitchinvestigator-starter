@@ -4,11 +4,16 @@ import streamlit as st
 def get_range_for_difficulty(difficulty: str):
     if difficulty == "Easy":
         return 1, 20
+    # FIX: Normal's range used to be 1-100 (wider than "Hard"'s), which made
+    # Hard easier than Normal. Corrected to 1-50 so difficulty increases
+    # in order: Easy (1-20) < Normal (1-50) < Hard (1-100).
     if difficulty == "Normal":
-        return 1, 100
-    if difficulty == "Hard":
         return 1, 50
-    return 1, 100
+    # FIX: Hard's range used to be 1-50, same as (or narrower than) Normal.
+    # Corrected to 1-100 so Hard is genuinely the widest/hardest range.
+    if difficulty == "Hard":
+        return 1, 100
+    return 1, 50
 
 
 def parse_guess(raw: str):
@@ -33,18 +38,14 @@ def check_guess(guess, secret):
     if guess == secret:
         return "Win", "🎉 Correct!"
 
-    try:
-        if guess > secret:
-            return "Too High", "📈 Go HIGHER!"
-        else:
-            return "Too Low", "📉 Go LOWER!"
-    except TypeError:
-        g = str(guess)
-        if g == secret:
-            return "Win", "🎉 Correct!"
-        if g > secret:
-            return "Too High", "📈 Go HIGHER!"
-        return "Too Low", "📉 Go LOWER!"
+    # FIX: hint messages were swapped with their outcome labels, so a guess
+    # that was too high told the player to go higher. `guess`/`secret` are
+    # always ints (see the FIX in the submit handler below), so the old
+    # `except TypeError` string-comparison fallback is unreachable and removed.
+    if guess > secret:
+        return "Too High", "📉 Go LOWER!"
+    else:
+        return "Too Low", "📈 Go HIGHER!"
 
 
 def update_score(current_score: int, outcome: str, attempt_number: int):
@@ -93,7 +94,10 @@ if "secret" not in st.session_state:
     st.session_state.secret = random.randint(low, high)
 
 if "attempts" not in st.session_state:
-    st.session_state.attempts = 1
+    # FIX: attempts used to start at 1 in the buggy version, so the debug
+    # panel and "Attempts left" display were off by one before any guess
+    # was submitted. Initialized to 0 so a fresh session starts accurately.
+    st.session_state.attempts = 0
 
 if "score" not in st.session_state:
     st.session_state.score = 0
@@ -155,12 +159,11 @@ if submit:
     else:
         st.session_state.history.append(guess_int)
 
-        if st.session_state.attempts % 2 == 0:
-            secret = str(st.session_state.secret)
-        else:
-            secret = st.session_state.secret
-
-        outcome, message = check_guess(guess_int, secret)
+        # FIX: removed the "convert secret to a string on even attempts" glitch.
+        # `guess_int` is always an int, so `secret` must stay an int too —
+        # comparing str vs int had no legitimate purpose and only forced
+        # check_guess into a lexicographic string comparison half the time.
+        outcome, message = check_guess(guess_int, st.session_state.secret)
 
         if show_hint:
             st.warning(message)
