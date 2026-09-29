@@ -44,6 +44,7 @@ elif difficulty != st.session_state.difficulty:
     st.session_state.secret = random.randint(low, high)
     st.session_state.status = "playing"
     st.session_state.history = []
+    st.session_state.last_message = None
     st.info(f"Difficulty changed to {difficulty} — new game started.")
 
 if "secret" not in st.session_state:
@@ -63,6 +64,9 @@ if "status" not in st.session_state:
 
 if "history" not in st.session_state:
     st.session_state.history = []
+
+if "last_message" not in st.session_state:
+    st.session_state.last_message = None
 
 st.subheader("Make a guess")
 
@@ -84,6 +88,7 @@ if new_game:
     st.session_state.secret = random.randint(low, high)
     st.session_state.status = "playing"
     st.session_state.history = []
+    st.session_state.last_message = None
     st.success("New game started.")
     st.rerun()
 
@@ -109,9 +114,7 @@ if st.session_state.status == "playing" and submit:
         # comparing str vs int had no legitimate purpose and only forced
         # check_guess into a lexicographic string comparison half the time.
         outcome, message = check_guess(guess_int, st.session_state.secret)
-
-        if show_hint:
-            st.warning(message)
+        st.session_state.last_message = message
 
         st.session_state.score = update_score(
             current_score=st.session_state.score,
@@ -139,6 +142,12 @@ if st.session_state.status == "playing" and submit:
 
 # Render status/debug info after the submit block above so it reflects
 # this run's mutation instead of the pre-guess state from the prior run.
+# The hint is read from session_state (not a submit-local variable) so
+# toggling "Show hint" back on redisplays the last guess's hint immediately,
+# instead of needing another guess submitted to repopulate it.
+if show_hint and st.session_state.last_message:
+    st.warning(st.session_state.last_message)
+
 st.info(
     f"Guess a number between 1 and 100. "
     f"Attempts left: {attempt_limit - st.session_state.attempts}"
