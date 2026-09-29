@@ -1,6 +1,20 @@
+import random
+
+
 def get_range_for_difficulty(difficulty: str):
     """Return (low, high) inclusive range for a given difficulty."""
-    raise NotImplementedError("Refactor this function from app.py into logic_utils.py")
+    if difficulty == "Easy":
+        return 1, 20
+    # FIX: Normal's range used to be 1-100 (wider than "Hard"'s), which made
+    # Hard easier than Normal. Corrected to 1-50 so difficulty increases
+    # in order: Easy (1-20) < Normal (1-50) < Hard (1-100).
+    if difficulty == "Normal":
+        return 1, 50
+    # FIX: Hard's range used to be 1-50, same as (or narrower than) Normal.
+    # Corrected to 1-100 so Hard is genuinely the widest/hardest range.
+    if difficulty == "Hard":
+        return 1, 100
+    return 1, 50
 
 
 def parse_guess(raw: str):
@@ -9,7 +23,21 @@ def parse_guess(raw: str):
 
     Returns: (ok: bool, guess_int: int | None, error_message: str | None)
     """
-    raise NotImplementedError("Refactor this function from app.py into logic_utils.py")
+    if raw is None:
+        return False, None, "Enter a guess."
+
+    if raw == "":
+        return False, None, "Enter a guess."
+
+    try:
+        if "." in raw:
+            value = int(float(raw))
+        else:
+            value = int(raw)
+    except Exception:
+        return False, None, "That is not a number."
+
+    return True, value, None
 
 
 def check_guess(guess, secret):
@@ -33,6 +61,21 @@ def check_guess(guess, secret):
         return "Too Low", "📈 Go HIGHER!"
 
 
-def update_score(current_score: int, outcome: str, attempt_number: int):
-    """Update score based on outcome and attempt number."""
-    raise NotImplementedError("Refactor this function from app.py into logic_utils.py")
+def update_score(current_score: int, outcome: str, attempt_number: int, low: int, high: int):
+    """Update score based on outcome and attempt number.
+
+    A wrong guess ("Too High" or "Too Low") is penalized by a random amount
+    scaled to the difficulty range, rather than a flat deduction, so harder
+    difficulties (wider low/high ranges) sting more.
+    """
+    if outcome == "Win":
+        points = 100 - 10 * (attempt_number + 1)
+        if points < 10:
+            points = 10
+        return current_score + points
+
+    if outcome in ("Too High", "Too Low"):
+        penalty = random.randint(low // 2, high // 2)
+        return current_score - penalty
+
+    return current_score

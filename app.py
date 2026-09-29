@@ -1,69 +1,12 @@
 import random
 import streamlit as st
 
-def get_range_for_difficulty(difficulty: str):
-    if difficulty == "Easy":
-        return 1, 20
-    # FIX: Normal's range used to be 1-100 (wider than "Hard"'s), which made
-    # Hard easier than Normal. Corrected to 1-50 so difficulty increases
-    # in order: Easy (1-20) < Normal (1-50) < Hard (1-100).
-    if difficulty == "Normal":
-        return 1, 50
-    # FIX: Hard's range used to be 1-50, same as (or narrower than) Normal.
-    # Corrected to 1-100 so Hard is genuinely the widest/hardest range.
-    if difficulty == "Hard":
-        return 1, 100
-    return 1, 50
-
-
-def parse_guess(raw: str):
-    if raw is None:
-        return False, None, "Enter a guess."
-
-    if raw == "":
-        return False, None, "Enter a guess."
-
-    try:
-        if "." in raw:
-            value = int(float(raw))
-        else:
-            value = int(raw)
-    except Exception:
-        return False, None, "That is not a number."
-
-    return True, value, None
-
-
-def check_guess(guess, secret):
-    if guess == secret:
-        return "Win", "🎉 Correct!"
-
-    # FIX: hint messages were swapped with their outcome labels, so a guess
-    # that was too high told the player to go higher. `guess`/`secret` are
-    # always ints (see the FIX in the submit handler below), so the old
-    # `except TypeError` string-comparison fallback is unreachable and removed.
-    if guess > secret:
-        return "Too High", "📉 Go LOWER!"
-    else:
-        return "Too Low", "📈 Go HIGHER!"
-
-
-def update_score(current_score: int, outcome: str, attempt_number: int):
-    if outcome == "Win":
-        points = 100 - 10 * (attempt_number + 1)
-        if points < 10:
-            points = 10
-        return current_score + points
-
-    if outcome == "Too High":
-        if attempt_number % 2 == 0:
-            return current_score + 5
-        return current_score - 5
-
-    if outcome == "Too Low":
-        return current_score - 5
-
-    return current_score
+from logic_utils import (
+    check_guess,
+    get_range_for_difficulty,
+    parse_guess,
+    update_score,
+)
 
 st.set_page_config(page_title="Glitchy Guesser", page_icon="🎮")
 
@@ -161,6 +104,8 @@ if st.session_state.status == "playing" and submit:
             current_score=st.session_state.score,
             outcome=outcome,
             attempt_number=st.session_state.attempts,
+            low=low,
+            high=high,
         )
 
         if outcome == "Win":
