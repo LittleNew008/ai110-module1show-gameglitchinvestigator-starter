@@ -109,9 +109,9 @@ if st.session_state.status != "playing":
 if st.session_state.status == "playing" and submit:
     st.session_state.attempts += 1
 
-    ok, guess_int, err = parse_guess(raw_guess)
+    _, guess_int, err = parse_guess(raw_guess)
 
-    if not ok:
+    if guess_int is None:
         st.session_state.history.append(raw_guess)
         st.error(err)
     else:

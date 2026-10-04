@@ -17,7 +17,7 @@ def get_range_for_difficulty(difficulty: str):
     return 1, 50
 
 
-def parse_guess(raw: str):
+def parse_guess(raw: str | None):
     """
     Parse user input into an int guess.
 
