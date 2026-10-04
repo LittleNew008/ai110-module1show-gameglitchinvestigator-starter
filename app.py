@@ -3,6 +3,7 @@ import streamlit as st
 
 from logic_utils import (
     check_guess,
+    get_proximity_label,
     get_range_for_difficulty,
     parse_guess,
     update_score,
@@ -46,6 +47,7 @@ elif difficulty != st.session_state.difficulty:
     st.session_state.status = "playing"
     st.session_state.history = []
     st.session_state.last_message = None
+    st.session_state.last_proximity = None
     st.info(f"Difficulty changed to {difficulty} — new game started.")
 
 if "secret" not in st.session_state:
@@ -69,6 +71,9 @@ if "history" not in st.session_state:
 if "last_message" not in st.session_state:
     st.session_state.last_message = None
 
+if "last_proximity" not in st.session_state:
+    st.session_state.last_proximity = None
+
 st.subheader("Make a guess")
 
 raw_guess = st.text_input(
@@ -91,6 +96,7 @@ if new_game:
     st.session_state.status = "playing"
     st.session_state.history = []
     st.session_state.last_message = None
+    st.session_state.last_proximity = None
     st.success("New game started.")
     st.rerun()
 
@@ -117,6 +123,9 @@ if st.session_state.status == "playing" and submit:
         # check_guess into a lexicographic string comparison half the time.
         outcome, message = check_guess(guess_int, st.session_state.secret)
         st.session_state.last_message = message
+        st.session_state.last_proximity = (
+            None if outcome == "Win" else get_proximity_label(guess_int, st.session_state.secret, low, high)
+        )
 
         st.session_state.score = update_score(
             current_score=st.session_state.score,
@@ -149,6 +158,8 @@ if st.session_state.status == "playing" and submit:
 # instead of needing another guess submitted to repopulate it.
 if show_hint and st.session_state.last_message:
     st.warning(st.session_state.last_message)
+    if st.session_state.last_proximity:
+        st.caption(st.session_state.last_proximity)
 
 st.info(
     f"Guess a number between 1 and 100. "
@@ -161,6 +172,21 @@ with st.expander("Developer Debug Info", expanded=True):
     st.write("Score:", st.session_state.score)
     st.write("Difficulty:", difficulty)
     st.write("History:", st.session_state.history)
+
+if st.session_state.history:
+    st.subheader("Session Summary")
+    st.table([
+        {
+            "Attempt": i + 1,
+            "Guess": entry,
+            "Proximity": (
+                get_proximity_label(entry, st.session_state.secret, low, high)
+                if isinstance(entry, int)
+                else "Invalid input"
+            ),
+        }
+        for i, entry in enumerate(st.session_state.history)
+    ])
 
 st.divider()
 st.caption("Built by an AI that claims this code is production-ready.")

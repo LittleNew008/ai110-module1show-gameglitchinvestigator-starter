@@ -61,6 +61,30 @@ def check_guess(guess, secret):
         return "Too Low", "📈 Go HIGHER!"
 
 
+def get_proximity_label(guess: int, secret: int, low: int, high: int) -> str:
+    """Return a Hot/Cold emoji label for how close `guess` is to `secret`.
+
+    Distance is normalized against the active difficulty's range
+    (`high - low`) so the same raw distance reads as "hotter" on Easy's
+    narrow range than on Hard's wide one.
+    """
+    if guess == secret:
+        return "🎯 Exact!"
+
+    span = max(high - low, 1)
+    fraction = abs(guess - secret) / span
+
+    if fraction <= 0.05:
+        return "🔥 Blazing Hot!"
+    if fraction <= 0.15:
+        return "🌡️ Hot"
+    if fraction <= 0.35:
+        return "😐 Warm"
+    if fraction <= 0.60:
+        return "🥶 Cold"
+    return "🧊 Freezing"
+
+
 def update_score(current_score: int, outcome: str, attempt_number: int, low: int, high: int):
     """Update score based on outcome and attempt number.
 

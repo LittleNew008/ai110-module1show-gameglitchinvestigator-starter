@@ -1,6 +1,12 @@
 import pytest
 
-from logic_utils import check_guess, get_range_for_difficulty, parse_guess, update_score
+from logic_utils import (
+    check_guess,
+    get_proximity_label,
+    get_range_for_difficulty,
+    parse_guess,
+    update_score,
+)
 
 
 def test_winning_guess():
@@ -267,3 +273,42 @@ def test_update_score_unknown_outcome_leaves_score_unchanged():
 
 def test_update_score_unknown_outcome_preserves_negative_score():
     assert update_score(-5, "", attempt_number=1, low=1, high=20) == -5
+
+
+# --- get_proximity_label: Hot/Cold distance buckets (SF10 UI enhancement) ---
+
+
+def test_proximity_exact_match():
+    assert get_proximity_label(50, 50, low=1, high=100) == "🎯 Exact!"
+
+
+def test_proximity_blazing_hot_at_boundary():
+    # 5 away out of a 100-wide range is exactly the 5% cutoff.
+    assert get_proximity_label(55, 50, low=1, high=101) == "🔥 Blazing Hot!"
+
+
+def test_proximity_hot_just_past_blazing_boundary():
+    assert get_proximity_label(56, 50, low=1, high=101) == "🌡️ Hot"
+
+
+def test_proximity_warm_midrange():
+    assert get_proximity_label(70, 50, low=1, high=101) == "😐 Warm"
+
+
+def test_proximity_cold_far_away():
+    assert get_proximity_label(90, 50, low=1, high=101) == "🥶 Cold"
+
+
+def test_proximity_freezing_at_opposite_end():
+    assert get_proximity_label(1, 100, low=1, high=101) == "🧊 Freezing"
+
+
+def test_proximity_scales_to_narrow_range():
+    # Same raw distance (2) reads hotter on a narrow Easy-sized range.
+    assert get_proximity_label(12, 10, low=1, high=20) == "🌡️ Hot"
+
+
+def test_proximity_handles_degenerate_zero_width_range():
+    # low == high: span is floored to 1 instead of dividing by zero.
+    assert get_proximity_label(5, 5, low=10, high=10) == "🎯 Exact!"
+    assert get_proximity_label(6, 5, low=10, high=10) == "🧊 Freezing"

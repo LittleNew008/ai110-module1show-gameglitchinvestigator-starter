@@ -67,11 +67,11 @@ See [reflection.md](reflection.md) for the full bug log, how AI was used to find
 
 ```
 pytest tests/ -q
-........................................................                 [100%]
-56 passed in 1.77s
+................................................................         [100%]
+64 passed in 1.76s
 ```
 
-`tests/test_game_logic.py` (42 tests) covers the pure logic in `logic_utils.py` — `check_guess`, `get_range_for_difficulty`, `parse_guess`, and `update_score`, including boundary cases and the string-vs-int `TypeError` regression. `tests/test_app_state.py` (14 tests) uses `streamlit.testing.v1.AppTest` to drive `app.py` as a simulated session and assert on `session_state` directly — this is what caught the score not resetting on "New Game."
+`tests/test_game_logic.py` (50 tests) covers the pure logic in `logic_utils.py` — `check_guess`, `get_range_for_difficulty`, `parse_guess`, `update_score`, and `get_proximity_label`, including boundary cases and the string-vs-int `TypeError` regression. `tests/test_app_state.py` (14 tests) uses `streamlit.testing.v1.AppTest` to drive `app.py` as a simulated session and assert on `session_state` directly — this is what caught the score not resetting on "New Game."
 
 ## 🚀 Stretch Features
 
@@ -79,3 +79,4 @@ pytest tests/ -q
 - [x] **Scoring system** — `update_score()` awards points on a win based on how many attempts were used (fewer attempts, higher score) and applies a small randomized penalty on a miss, surfaced live in the debug panel.
 - [x] **Guess history** — every submitted guess (valid or invalid input) is appended to `st.session_state.history` and shown in the debug panel.
 - [x] **Persistent hint toggle** — "Show hint" can be unchecked and re-checked at any time without needing to resubmit a guess to see the hint again.
+- [x] **Hot/Cold proximity feedback + session summary table** — `get_proximity_label()` in [logic_utils.py](logic_utils.py) scores how close a guess is to the secret as a fraction of the active difficulty's range (`|guess - secret| / (high - low)`) and returns one of six labels: 🎯 Exact!, 🔥 Blazing Hot!, 🌡️ Hot, 😐 Warm, 🥶 Cold, 🧊 Freezing. `app.py` shows the label as a caption under each hint (see `st.session_state.last_proximity`, set alongside `last_message` in the submit block) and renders a "Session Summary" table (`st.table`, right below the debug expander) listing every attempt's guess and proximity label so a player can see their guesses trending hotter or colder over a session. Covered by 8 new tests in `tests/test_game_logic.py` (exact match, each bucket boundary, range-scaling, and the zero-width-range edge case).
